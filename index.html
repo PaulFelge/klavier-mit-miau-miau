@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Klavier mit Miau Miau</title>
+  <meta name="theme-color" content="#ecd8c0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="bar">
+    <button id="back" class="round" aria-label="Zurück zu den Lektionen" hidden>←</button>
+    <h1 id="title">Klavier mit Miau Miau</h1>
+    <button id="mic" class="pill" aria-pressed="false">🎤 Zuhören</button>
+  </header>
+
+  <main>
+    <div class="stage">
+      <div id="cat" class="cat" role="img" aria-label="Miau Miau, die Katze">
+      <!-- Kitten clip whose head turns from looking left (data-left, seconds) to right (data-right). Without it the drawn cat below is used. -->
+      <video id="kitten" src="assets/kitten.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+      <svg class="toon" viewBox="0 0 200 190" aria-hidden="true">
+        <g class="head">
+          <path class="fur" d="M38 78 L48 12 L92 46 Z M162 78 L152 12 L108 46 Z"/>
+          <path class="ear-in" d="M50 60 L55 28 L78 47 Z M150 60 L145 28 L122 47 Z"/>
+          <ellipse class="fur" cx="100" cy="102" rx="82" ry="66"/>
+          <path class="stripe" d="M100 40 v18 M84 42 l4 15 M116 42 l-4 15"/>
+          <g class="eyes">
+            <g class="eye-open">
+              <ellipse class="eye" cx="68" cy="98" rx="17" ry="19"/>
+              <ellipse class="eye" cx="132" cy="98" rx="17" ry="19"/>
+              <g class="pupils">
+                <circle class="pupil" cx="68" cy="98" r="10"/><circle class="shine" cx="72" cy="93" r="3.5"/>
+                <circle class="pupil" cx="132" cy="98" r="10"/><circle class="shine" cx="136" cy="93" r="3.5"/>
+              </g>
+            </g>
+            <path class="eye-happy" d="M52 102 q16 -20 32 0 M116 102 q16 -20 32 0"/>
+          </g>
+          <ellipse class="blush" cx="48" cy="122" rx="12" ry="7"/>
+          <ellipse class="blush" cx="152" cy="122" rx="12" ry="7"/>
+          <path class="nose" d="M93 116 h14 l-7 8 Z"/>
+          <path class="mouth" d="M100 124 q-7 10 -15 4 M100 124 q7 10 15 4"/>
+          <path class="mouth-open" d="M88 128 q12 22 24 0 Z"/>
+          <path class="whisker" d="M30 112 l-26 -6 M30 120 h-28 M170 112 l26 -6 M170 120 h28"/>
+        </g>
+        <ellipse class="paw" cx="62" cy="176" rx="22" ry="13"/>
+        <ellipse class="paw" cx="138" cy="176" rx="22" ry="13"/>
+      </svg>
+      </div>
+      <p id="bubble" class="bubble" aria-live="polite">Hallo! Ich bin Miau Miau. Lass uns Klavier spielen!</p>
+    </div>
+
+    <section id="home">
+      <p id="mic-why" class="note-small">Tipp auf <b>🎤 Zuhören</b>, dann kann ich dein echtes Klavier hören. Der Ton bleibt auf diesem Gerät, nichts wird aufgenommen oder verschickt.</p>
+      <ol id="lessons" class="lessons"></ol>
+    </section>
+
+    <section id="lesson" hidden>
+      <div class="target-row">
+        <div id="target" class="target"><span id="t-note">C</span><span id="t-finger" class="finger"></span></div>
+        <button id="hear" class="pill">👂 Anhören</button>
+      </div>
+      <ol id="dots" class="dots" aria-label="Fortschritt"></ol>
+      <button id="next" class="pill big" hidden>Nächste Lektion →</button>
+    </section>
+  </main>
+
+  <div id="keys" class="keys" aria-label="Klavier"></div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "Klavier mit Miau Miau",
+  "short_name": "Miau Klavier",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ecd8c0",
+  "theme_color": "#ecd8c0",
+  "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "piano-with-miau-miau",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx -y serve -l 5173 .",
+    "test": "node --test"
+  }
+}
