@@ -1,7 +1,7 @@
 // Run: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { detectPitch, freqToMidi, createNoteTracker, rms } from './pitch.js';
+import { detectPitch, freqToMidi, createNoteTracker, rms, clipName } from './pitch.js';
 
 const SR = 48000;
 function tone(f, harmonics = [1], n = 2048) {
@@ -42,4 +42,12 @@ test('tracker ignores a one-frame blip', () => {
   assert.equal(feed(62, 0.3), null);
   assert.equal(feed(null, 0.3), null);
   assert.equal(feed(62, 0.3), null);
+});
+
+test('voice clip names are plain, short and keep notes apart', () => {
+  assert.equal(clipName('Das ist ein Cis!'), 'das-ist-ein-cis');
+  assert.equal(clipName('Okay, ich höre nicht mehr zu.'), 'okay-ich-hore-nicht-mehr-zu');
+  assert.notEqual(clipName('Das ist ein C!'), clipName('Das ist ein Cis!'));
+  assert.equal(clipName('Spiel irgendeine Taste und ich sage dir, wie sie heißt!'), 'spiel-irgendeine-taste-und-ich-sage-dir-wie-sie-heisst');
+  assert.equal(clipName('Daumen auf das C. Lauf mit drei Fingern nach oben: C, D, E. Und wieder zurück!'), 'daumen-auf-das-c-lauf-mit-drei-fingern-nach-oben-c-d-e-und-w');
 });

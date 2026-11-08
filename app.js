@@ -1,4 +1,4 @@
-import { NOTE_NAMES, detectPitch, freqToMidi, midiToFreq, pitchClass, rms, createNoteTracker } from './pitch.js';
+import { NOTE_NAMES, clipName, detectPitch, freqToMidi, midiToFreq, pitchClass, rms, createNoteTracker } from './pitch.js';
 
 const $ = (id) => document.getElementById(id);
 const LETTER_TO_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, H: 11 };
@@ -71,13 +71,36 @@ function meow() {
   quietUntil = Math.max(quietUntil, performance.now() + 850);
 }
 
-function say(text) {
+// Recorded lines live in assets/voice/ (see README). `parts` lets one sentence be built from two clips.
+const voice = new Audio(); // one reused element: iOS keeps letting it play once a tap has started it
+let sayId = 0;
+function say(text, parts = [text]) {
   $('bubble').textContent = text;
+  hush();
+  const id = ++sayId;
+  const queue = parts.map((p) => `assets/voice/${clipName(p)}.mp3`);
+  const fallback = () => { if (id === sayId) { sayId++; speak(text); } }; // clip missing or blocked
+  const next = () => {
+    if (id !== sayId) return;
+    if (!queue.length) return void (quietUntil = Math.max(quietUntil, performance.now() + 250));
+    voice.src = queue.shift();
+    voice.play().catch(fallback);
+  };
+  voice.onended = next;
+  voice.onerror = fallback;
+  next();
+}
+
+function speak(text) {
   if (!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text.replace(/[^\p{L}\p{N}\s.,!?'♯]/gu, ''));
   u.lang = 'de-DE'; u.pitch = 1.6; u.rate = 0.95;
   speechSynthesis.speak(u);
+}
+
+function hush() {
+  voice.pause();
+  window.speechSynthesis?.cancel();
 }
 
 /* ---------------- Cat ---------------- */
@@ -277,7 +300,7 @@ function onNote(midi) {
   if (!want) return;
   if (pitchClass(midi) !== LETTER_TO_PC[want]) {
     mood('hmm');
-    return say(`Das war ein ${name(midi)}. Finde das ${want}!`);
+    return say(`Das war ein ${name(midi)}. Finde das ${want}!`, [`Das war ein ${name(midi)}.`, `Finde das ${want}!`]);
   }
   current.pos++;
   if (current.pos < current.notes.length) {
@@ -297,7 +320,7 @@ function onNote(midi) {
 }
 
 function playDemo() {
-  window.speechSynthesis?.cancel();
+  hush();
   current.notes.forEach((letter, i) => {
     const midi = WHITE.find((m) => name(m) === letter);
     playTone(midi, i * 0.5, 0.6);
@@ -340,7 +363,7 @@ async function toggleMic() {
   const stream = micStream;
   const timer = setInterval(() => {
     if (micStream !== stream) return clearInterval(timer);
-    if (performance.now() < quietUntil || window.speechSynthesis?.speaking) return feed(null, 0);
+    if (performance.now() < quietUntil || !voice.paused || window.speechSynthesis?.speaking) return feed(null, 0);
     analyser.getFloatTimeDomainData(buf);
     const level = rms(buf);
     const hz = level > 0.01 ? detectPitch(buf, ac.sampleRate) : null;
