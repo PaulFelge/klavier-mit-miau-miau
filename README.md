@@ -26,6 +26,8 @@ Re-encode so every frame is a keyframe, otherwise scrubbing stutters on phones:
 ffmpeg -i in.mp4 -an -c:v libx264 -g 1 -crf 26 -pix_fmt yuv420p -vf scale=960:-2 -movflags +faststart assets/kitten.mp4
 ```
 
+Three short reaction clips play over the turning kitten and then fade back to it: `assets/kitten-ja.mp4` on each correct note, `assets/kitten-geschafft.mp4` when a lesson is finished, and `assets/kitten-kuscheln.mp4` (with a purr) when she taps the kitten. Each one starts and ends facing the front. They play straight through, so they need no keyframe re-encode.
+
 Scrubbing needs a server that supports HTTP range requests (`npm start`, GitHub Pages and Netlify all do).
 
 On a phone, the mic only works over HTTPS, so host the folder on any static host (GitHub Pages, Netlify, Cloudflare Pages). There is no build step.

@@ -24,6 +24,10 @@
       <div id="cat" class="cat" role="img" aria-label="Miau Miau, die Katze">
       <!-- Kitten clip whose head turns from looking left (data-left, seconds) to right (data-right). Without it the drawn cat below is used. -->
       <video id="kitten" src="assets/kitten.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+      <!-- Reactions play over the turning kitten, then fade back to it. All start and end facing front. -->
+      <video id="react-ja" class="react" src="assets/kitten-ja.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+      <video id="react-geschafft" class="react" src="assets/kitten-geschafft.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+      <video id="react-kuscheln" class="react" src="assets/kitten-kuscheln.mp4" playsinline preload="auto" aria-hidden="true"></video>
       <svg class="toon" viewBox="0 0 200 190" aria-hidden="true">
         <g class="head">
           <path class="fur" d="M38 78 L48 12 L92 46 Z M162 78 L152 12 L108 46 Z"/>

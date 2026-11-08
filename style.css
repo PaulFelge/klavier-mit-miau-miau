@@ -85,6 +85,10 @@ main {
   mask-image: radial-gradient(closest-side, #000 80%, transparent);
 }
 .cat.video.hmm { rotate: -6deg; }
+.cat.video.happy { animation: none; } /* the reaction clips do the hopping */
+.cat { position: relative; }
+.cat.video video.react { position: absolute; inset: 0; opacity: 0; transition: opacity 0.15s ease-out; }
+.cat.video video.react.on { opacity: 1; }
 .cat .fur { fill: var(--fur); }
 .cat .ear-in, .cat .blush { fill: var(--pink); }
 .cat .blush { opacity: 0.55; }

@@ -108,6 +108,17 @@ function useKitten() {
 if (kitten.readyState >= 1) useKitten();
 else kitten.addEventListener('loadedmetadata', useKitten, { once: true });
 
+// Plays a reaction clip over the kitten. Returns the clip, or null when the drawn cat is shown instead.
+function react(name) {
+  if (!cat.classList.contains('video')) return null;
+  document.querySelectorAll('video.react.on').forEach((o) => { o.pause(); o.classList.remove('on'); });
+  const v = $(`react-${name}`);
+  v.currentTime = 0;
+  v.play().then(() => v.classList.add('on'), () => {});
+  return v;
+}
+document.querySelectorAll('video.react').forEach((v) => v.addEventListener('ended', () => v.classList.remove('on')));
+
 function lookAt(x, y) {
   const r = cat.getBoundingClientRect();
   if (cat.classList.contains('video')) {
@@ -271,12 +282,14 @@ function onNote(midi) {
   current.pos++;
   if (current.pos < current.notes.length) {
     mood('happy', 600);
+    react('ja');
     if (current.pos === 1 || current.notes[current.pos] !== want) $('bubble').textContent = pick(praise);
     return renderTarget();
   }
   renderTarget();
   store.add(current.index);
   mood('happy', 2500);
+  react('geschafft');
   confetti();
   meow();
   setTimeout(() => say('Geschafft! Du bekommst einen Stern!'), 600);
@@ -344,4 +357,9 @@ $('back').addEventListener('click', goHome);
 $('mic').addEventListener('click', toggleMic);
 $('hear').addEventListener('click', playDemo);
 $('next').addEventListener('click', () => startLesson(current.index + 1));
-cat.addEventListener('click', () => { meow(); mood('happy', 800); });
+cat.addEventListener('click', () => {
+  // Kuscheln clip carries its own purr, so keep the mic deaf while it plays.
+  if (react('kuscheln')) quietUntil = Math.max(quietUntil, performance.now() + 2400);
+  else meow();
+  mood('happy', 800);
+});
