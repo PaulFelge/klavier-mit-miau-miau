@@ -6,7 +6,7 @@ A piano app (in German) for a 6-year-old. Miau Miau the cat watches the screen, 
 
 - Works on phone and desktop in the browser, and can be installed to the home screen.
 - Pitch detection runs on the device. No audio is recorded or sent anywhere.
-- Lessons: Freies Spiel, Finde das C, C D E, Fünf Pfoten, then Hänschen klein, Alle meine Entchen, Funkel funkel kleiner Stern and Ode an die Freude. Notes use German names (H, not B).
+- Lessons: Freies Spiel, Finde das C, C D E, Fünf Pfoten, then Hänschen klein, Alle meine Entchen, Funkel funkel kleiner Stern and Ode an die Freude. Then rhythm with Ti-ti-ta (Ta Ta Ta, Ti-ti und Ta, Rhythmus-Echo, Hänschen klein im Rhythmus) and gebunden vs. ungebunden (Schleichkatze, Hüpfkatze, Schleichen und Hüpfen). Notes use German names (H, not B). The plan for these and later stages is in [docs/stages.md](docs/stages.md).
 - No microphone? Tap the on-screen keys instead.
 
 ## Run
@@ -26,7 +26,7 @@ Re-encode so every frame is a keyframe, otherwise scrubbing stutters on phones:
 ffmpeg -i in.mp4 -an -c:v libx264 -g 1 -crf 26 -pix_fmt yuv420p -vf scale=960:-2 -movflags +faststart assets/kitten.mp4
 ```
 
-Three short reaction clips play over the turning kitten and then fade back to it: `assets/kitten-ja.mp4` on each correct note, `assets/kitten-geschafft.mp4` when a lesson is finished, and `assets/kitten-kuscheln.mp4` (with a purr) when she taps the kitten. Each one starts and ends facing the front. They play straight through, so they need no keyframe re-encode.
+Short reaction clips play over the turning kitten and then fade back to it: `assets/kitten-ja.mp4` on each correct note, `assets/kitten-geschafft.mp4` when a lesson is finished, `assets/kitten-kuscheln.mp4` (with a purr) when she taps the kitten, `assets/kitten-klatschen.mp4` after a correct rhythm phrase, and `assets/kitten-schleichen.mp4` / `assets/kitten-huepfen.mp4` for gebunden / ungebunden. Each one starts and ends facing the front. They play straight through, so they need no keyframe re-encode.
 
 ## The voice
 

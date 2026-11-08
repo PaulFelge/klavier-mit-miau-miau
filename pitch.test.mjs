@@ -1,7 +1,7 @@
 // Run: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { detectPitch, freqToMidi, createNoteTracker, rms, clipName } from './pitch.js';
+import { detectPitch, freqToMidi, createNoteTracker, rms, clipName, parseBeat, rhythmOk, createTouchTracker } from './pitch.js';
 
 const SR = 48000;
 function tone(f, harmonics = [1], n = 2048) {
@@ -50,4 +50,24 @@ test('voice clip names are plain, short and keep notes apart', () => {
   assert.notEqual(clipName('Das ist ein C!'), clipName('Das ist ein Cis!'));
   assert.equal(clipName('Spiel irgendeine Taste und ich sage dir, wie sie heißt!'), 'spiel-irgendeine-taste-und-ich-sage-dir-wie-sie-heisst');
   assert.equal(clipName('Daumen auf das C. Lauf mit drei Fingern nach oben: C, D, E. Und wieder zurück!'), 'daumen-auf-das-c-lauf-mit-drei-fingern-nach-oben-c-d-e-und-w');
+});
+
+test('beat words become note lengths', () => {
+  assert.deepEqual(parseBeat('ti-ti ta ta-a'), [0.5, 0.5, 1, 2]);
+  assert.throws(() => parseBeat('tu'));
+});
+
+test('rhythm check accepts any steady tempo and catches ti played as ta', () => {
+  const beats = parseBeat('ta ta ti-ti ta');
+  assert.ok(rhythmOk([0, 600, 1200, 1500, 1800], beats));
+  assert.ok(rhythmOk([0, 900, 1800, 2250, 2700], beats), 'slower is fine');
+  assert.ok(rhythmOk([0, 640, 1180, 1530, 1800], beats), 'a little sloppy is fine');
+  assert.ok(!rhythmOk([0, 600, 1200, 1800, 2400], beats), 'all even is wrong');
+  assert.ok(!rhythmOk([0, 50, 100, 125, 150], beats), 'too fast to be real');
+});
+
+test('touch tracker tells gebunden from ungebunden', () => {
+  const linked = (levels) => { const t = createTouchTracker(); t(0.3, true); levels.forEach((l) => t(l, false)); return t(0.3, true); };
+  assert.equal(linked([0.3, 0.25, 0.2, 0.15]), true, 'held note fades a little');
+  assert.equal(linked([0.3, 0.2, 0.02, 0.005]), false, 'released before the next');
 });
