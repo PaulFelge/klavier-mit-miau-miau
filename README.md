@@ -29,6 +29,14 @@ ffmpeg -i in.mp4 -an -c:v libx264 -g 1 -crf 26 -pix_fmt yuv420p -vf scale=960:-2
 
 Short reaction clips play over the turning kitten and then fade back to it: `assets/kitten-ja.mp4` on each correct note, `assets/kitten-geschafft.mp4` when a lesson is finished, `assets/kitten-kuscheln.mp4` (with a purr) when she taps the kitten, `assets/kitten-klatschen.mp4` after a correct rhythm phrase, and `assets/kitten-schleichen.mp4` / `assets/kitten-huepfen.mp4` for gebunden / ungebunden. Each one starts and ends facing the front. They play straight through, so they need no keyframe re-encode.
 
+## Practice log
+
+Every note played (on screen or through the mic), every lesson start, demo, finished phrase and star is logged in the browser (`localStorage`, key `miau-log`, last 10000 events). Nothing leaves the device. The **📊 Übungsdaten speichern** button on the home screen downloads it as `miau-log-<date>.json`, one object per event:
+
+- `note`: `want` (expected note), `got`, `midi` (with octave), `ok`, `src` (`tap` or `mic`), `linked` (gebunden guess), `level` (mic loudness)
+- `phrase`: `ok`, `rhythmMiss`, `touchMiss`, `gaps` (ms between notes), `beats`, `links`
+- `start`, `demo`, `done`, `mic` (`on`)
+
 ## The voice
 
 Every line Miau Miau says is a recorded clip in `assets/voice/`. The file name comes from the text through `clipName()` in `pitch.js` ("Das ist ein Cis!" becomes `das-ist-ein-cis.mp3`). "Das war ein X. Finde das Y!" is played as two clips. If a clip is missing, the device's built-in voice reads the line instead, so a new or changed line still works before its clip exists.

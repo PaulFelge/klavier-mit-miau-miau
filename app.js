@@ -58,6 +58,20 @@ const store = {
   add(i) { try { localStorage.setItem('miau-done', JSON.stringify([...new Set([...this.get(), i])])); } catch {} },
 };
 
+// Practice log, to look back at what works and what doesn't. Stays on this device until saved with 📊.
+// shortcut: localStorage capped at the last 10000 events (~1 MB); move to IndexedDB if more history is needed.
+const LOG_KEY = 'miau-log';
+let logBuf;
+function log(type, data) {
+  try {
+    logBuf ??= JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+    logBuf.push({ t: new Date().toISOString(), type, ...data });
+    if (logBuf.length > 10000) logBuf.splice(0, logBuf.length - 10000);
+    localStorage.setItem(LOG_KEY, JSON.stringify(logBuf));
+  } catch {}
+}
+const lessonTitle = () => current && LESSONS[current.index].title;
+
 /* ---------------- Sound ---------------- */
 let ctx;
 let quietUntil = 0; // ignore the mic while our own speaker is making sound
@@ -251,7 +265,7 @@ function buildKeys() {
     b.className = `key ${cls}`;
     b.dataset.midi = m;
     b.setAttribute('aria-label', name(m));
-    const press = (linked) => { playTone(m); flash(m); onNote(m, linked); };
+    const press = (linked) => { playTone(m); flash(m); onNote(m, linked, 'tap'); };
     b.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       const linked = held.size > 0; // another finger still down = gebunden
@@ -320,6 +334,7 @@ function startLesson(i) {
     return { beats, touch: p.touch ?? l.touch ?? null, notes: p.notes ? p.notes.split(' ') : beats.map(() => 'C'), hands: p.hands, tip: p.tip };
   });
   current = { index: i, phrases };
+  log('start', { lesson: l.title });
   enterPhrase(0);
   $('title').textContent = l.title;
   $('next').hidden = true;
@@ -375,10 +390,14 @@ const GOOD = { legato: 'Schön geschlichen!', detached: 'Schön gehüpft!' };
 const NEXT = { legato: 'Jetzt mit Bogen: schleichen!', detached: 'Jetzt ohne Bogen: hüpfen!' };
 const MISS = { legato: 'Da war eine Lücke. Lass den Finger unten, bis der nächste drückt!', detached: 'Das war noch gebunden. Heb den Finger kurz hoch, wie beim Hüpfen!' };
 
-function onNote(midi, linked) {
+function onNote(midi, linked, src, level) {
+  const want = current && !LESSONS[current.index].free ? current.notes[current.pos] : undefined;
+  log('note', {
+    lesson: lessonTitle(), ph: current?.ph, pos: current?.pos, want, got: name(midi), midi,
+    ok: want ? pitchClass(midi) === NOTE_NAMES.indexOf(want) : undefined, src, linked, level,
+  });
   if (!current) return say(`Das ist ein ${name(midi)}!`);
   if (LESSONS[current.index].free) { mood('happy', 700); return say(`Das ist ein ${name(midi)}!`); }
-  const want = current.notes[current.pos];
   if (!want) return;
   const { beats, touch } = current.phrase;
   const strict = beats || touch; // rhythm and touch are judged over the whole phrase
@@ -407,6 +426,10 @@ function onNote(midi, linked) {
   const judged = current.links.filter((_, k) => !(touch === 'legato' && notes[k + 1] === notes[k])); // links[k]: note k → k+1
   const touchMiss = touch && judged.filter((l) => l !== (touch === 'legato')).length > Math.floor(judged.length / 4);
   const rhythmMiss = beats && !rhythmOk(current.times, beats);
+  log('phrase', {
+    lesson: lessonTitle(), ph: current.ph, ok: !(rhythmMiss || touchMiss), rhythmMiss, touchMiss, touch,
+    beats, gaps: current.times.slice(1).map((t, i) => Math.round(t - current.times[i])), links: current.links,
+  });
   if (rhythmMiss || touchMiss) {
     mood('hmm');
     enterPhrase(current.ph);
@@ -426,6 +449,7 @@ function onNote(midi, linked) {
     return say(parts.join(' '), parts, playDemo);
   }
   store.add(current.index);
+  log('done', { lesson: lessonTitle() });
   mood('happy', 2500);
   react('geschafft');
   confetti();
@@ -437,6 +461,7 @@ function onNote(midi, linked) {
 function playDemo() {
   hush();
   if (!current?.notes.length) return;
+  log('demo', { lesson: lessonTitle(), ph: current.ph });
   const { notes, phrase: { beats, touch } } = current;
   const beat = beats ? 0.6 : 0.5; // seconds per ta
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -463,6 +488,7 @@ async function toggleMic() {
   if (micStream) {
     micStream.getTracks().forEach((t) => t.stop());
     micStream = null;
+    log('mic', { on: false });
     $('mic').setAttribute('aria-pressed', 'false');
     cat.classList.remove('listening');
     $('mic-why').hidden = false;
@@ -488,6 +514,7 @@ async function toggleMic() {
   cat.classList.add('listening');
   $('mic-why').hidden = true;
   say('Ich höre zu! Spiel eine Taste auf deinem Klavier.');
+  log('mic', { on: true });
 
   const stream = micStream;
   const timer = setInterval(() => {
@@ -499,7 +526,7 @@ async function toggleMic() {
     const midi = hz && hz > 60 && hz < 1500 ? freqToMidi(hz) : null;
     const hit = feed(midi, level);
     const linked = touch(level, hit != null);
-    if (hit != null) { flash(hit); onNote(hit, linked); }
+    if (hit != null) { flash(hit); onNote(hit, linked, 'mic', +level.toFixed(4)); }
   }, 50);
 }
 
@@ -508,6 +535,13 @@ buildKeys();
 renderHome();
 $('back').addEventListener('click', goHome);
 $('mic').addEventListener('click', toggleMic);
+$('export').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([localStorage.getItem(LOG_KEY) || '[]'], { type: 'application/json' }));
+  a.download = `miau-log-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
 $('share').addEventListener('click', async () => {
   const { default: qrcode } = await import('./assets/qrcode.mjs');
   const qr = qrcode(0, 'M');
