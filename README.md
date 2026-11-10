@@ -31,7 +31,7 @@ Short reaction clips play over the turning kitten and then fade back to it: `ass
 
 ## Practice log
 
-Every note played (on screen or through the mic), every lesson start, demo, finished phrase and star is logged in the browser (`localStorage`, key `miau-log`, last 10000 events). Nothing leaves the device. The **📊 Übungsdaten speichern** button on the home screen downloads it as `miau-log-<date>.json`, one object per event:
+Every note played (on screen or through the mic), every lesson start, demo, finished phrase and star is logged in the browser (`localStorage`, key `miau-log`, last 10000 events). Nothing leaves the device. The **📊 Übungsdaten teilen** button on the home screen opens the phone's share sheet (AirDrop, mail, …) with `miau-log-<date>.json`, or downloads it where sharing isn't available, one object per event:
 
 - `note`: `want` (expected note), `got`, `midi` (with octave), `ok`, `src` (`tap` or `mic`), `linked` (gebunden guess), `level` (mic loudness)
 - `phrase`: `ok`, `rhythmMiss`, `touchMiss`, `gaps` (ms between notes), `beats`, `links`

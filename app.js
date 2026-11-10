@@ -535,10 +535,16 @@ buildKeys();
 renderHome();
 $('back').addEventListener('click', goHome);
 $('mic').addEventListener('click', toggleMic);
-$('export').addEventListener('click', () => {
+$('export').addEventListener('click', async () => {
+  const file = new File([localStorage.getItem(LOG_KEY) || '[]'], `miau-log-${new Date().toISOString().slice(0, 10)}.json`, { type: 'application/json' });
+  // Phones: share sheet (AirDrop, mail, messenger) to get it onto the PC. Elsewhere, or if sharing fails: download.
+  if (navigator.canShare?.({ files: [file] })) {
+    try { return await navigator.share({ files: [file], title: 'Miau Miau Übungsdaten' }); }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([localStorage.getItem(LOG_KEY) || '[]'], { type: 'application/json' }));
-  a.download = `miau-log-${new Date().toISOString().slice(0, 10)}.json`;
+  a.href = URL.createObjectURL(file);
+  a.download = file.name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
