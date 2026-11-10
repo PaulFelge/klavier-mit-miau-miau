@@ -208,6 +208,7 @@ main {
 .dots.legato li, .dots.detached li { width: 22px; height: 22px; }
 .dots.legato { gap: 4px; padding: 10px 12px 0; border-top: 3px solid var(--ink); border-radius: 50% 50% 0 0 / 18px 18px 0 0; }
 .dots.detached { gap: 20px; }
+.dots.legato li.lift { margin-left: 16px; }
 
 /* ---------- Keyboard ---------- */
 .keys {

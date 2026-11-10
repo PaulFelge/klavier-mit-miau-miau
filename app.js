@@ -9,6 +9,7 @@ const HAND = { L: { label: '🐻 Finger', Cis: 3, Dis: 2 }, R: { label: '🐦 Fi
 // Later lessons are split into short `phrases` that are judged as a whole:
 //   beat: 'ti-ti ta' (ta = one beat, ti = half). Without notes, every note is a C.
 //   touch: 'legato' (gebunden: next key goes down before the last comes up) or 'detached' (ungebunden).
+//     A repeated note can't be gebunden (same key), so legato only judges the steps.
 // Plan for these and later stages: docs/stages.md
 const LESSONS = [
   { title: 'Freies Spiel', free: true, intro: 'Spiel irgendeine Taste und ich sage dir, wie sie heißt!' },
@@ -23,8 +24,12 @@ const LESSONS = [
   {
     title: 'Gespräch in der Höhle',
     intro: 'Heute spielen wir nur auf den zwei schwarzen Tasten! Der Bär spielt mit der linken Hand, der Vogel mit der rechten.',
-    notes: 'Cis Dis Cis Dis Cis Dis Cis Dis Cis Dis Cis Dis ' + 'Dis Cis Dis Dis Cis Dis Cis Dis Dis Cis ' + 'Dis Dis Cis Cis Dis Dis Cis Dis Dis Cis Cis Dis Dis Cis',
-    hands: 'L'.repeat(12) + 'R'.repeat(10) + 'L'.repeat(14),
+    phrases: [
+      { notes: 'Cis Dis Cis Dis Cis Dis Cis Dis Cis Dis Cis Dis ' + 'Dis Cis Dis Dis Cis Dis Cis Dis Dis Cis', hands: 'L'.repeat(12) + 'R'.repeat(10) },
+      // Last line, as marked in her book: steps gebunden, repeated notes ungebunden.
+      { touch: 'legato', notes: 'Dis Dis Cis Cis Dis Dis Cis Dis Dis Cis Cis Dis Dis Cis', hands: 'L'.repeat(14),
+        tip: 'Jetzt der Bär mit Bogen: Beim Schritt schleichen, bei zwei gleichen Tönen hüpfen!' },
+    ],
   },
   // Stage 2: Ti-ti-ta. A phrase never ends on a ti: nothing follows the last note, so its length can't be heard.
   { title: 'Ta Ta Ta', intro: 'Jetzt kommt der Rhythmus! Ein großer Punkt heißt Ta. Spiel immer gleich schnell, wie eine Uhr: Ta, Ta, Ta, Ta.',
@@ -312,7 +317,7 @@ function startLesson(i) {
   const l = LESSONS[i];
   const phrases = l.free ? [] : (l.phrases ?? [{ notes: l.notes }]).map((p) => {
     const beats = p.beat ? parseBeat(p.beat) : null;
-    return { beats, touch: p.touch ?? l.touch ?? null, notes: p.notes ? p.notes.split(' ') : beats.map(() => 'C') };
+    return { beats, touch: p.touch ?? l.touch ?? null, notes: p.notes ? p.notes.split(' ') : beats.map(() => 'C'), hands: p.hands, tip: p.tip };
   });
   current = { index: i, phrases };
   enterPhrase(0);
@@ -344,6 +349,7 @@ function renderTarget() {
     li.style.setProperty('--note', `var(--${n})`);
     if (i < pos) li.classList.add('on');
     if (i === pos) li.classList.add('now');
+    if (phrase?.touch === 'legato' && n === notes[i - 1]) li.classList.add('lift'); // gap before a repeated note
     const b = phrase?.beats?.[i];
     if (b) li.dataset.syl = b < 1 ? 'ti' : b > 1 ? 'ta-a' : 'ta';
     if (b < 1) li.classList.add('ti');
@@ -353,7 +359,7 @@ function renderTarget() {
   if (!letter) return;
   $('target').style.setProperty('--note', `var(--${letter})`);
   $('t-note').textContent = letter;
-  const hand = HAND[LESSONS[current.index].hands?.[pos]];
+  const hand = HAND[phrase?.hands?.[pos]];
   const finger = hand ? hand[letter] : FINGER[letter];
   $('t-finger').textContent = finger ? `${hand?.label ?? 'Finger'} ${finger}` : '';
   const key = keyFor(letter);
@@ -397,7 +403,9 @@ function onNote(midi, linked) {
   }
   renderTarget();
   // One slip in four is forgiven: the mic's gebunden guess is not perfect.
-  const touchMiss = touch && current.links.filter((l) => l !== (touch === 'legato')).length > Math.floor(current.links.length / 4);
+  const notes = current.notes;
+  const judged = current.links.filter((_, k) => !(touch === 'legato' && notes[k + 1] === notes[k])); // links[k]: note k → k+1
+  const touchMiss = touch && judged.filter((l) => l !== (touch === 'legato')).length > Math.floor(judged.length / 4);
   const rhythmMiss = beats && !rhythmOk(current.times, beats);
   if (rhythmMiss || touchMiss) {
     mood('hmm');
@@ -409,12 +417,13 @@ function onNote(midi, linked) {
   if (current.ph + 1 < current.phrases.length) {
     mood('happy', 1200);
     react(CLIP[touch] ?? 'klatschen');
-    const good = GOOD[touch] ?? 'Genau im Rhythmus!';
+    const good = GOOD[touch] ?? (beats ? 'Genau im Rhythmus!' : null);
     enterPhrase(current.ph + 1);
     renderTarget();
     const next = current.phrase.touch;
-    const then = next && next !== touch ? NEXT[next] : null;
-    return say(then ? `${good} ${then}` : good, then ? [good, then] : [good], playDemo);
+    const then = current.phrase.tip ?? (next && next !== touch ? NEXT[next] : null);
+    const parts = [good, then].filter(Boolean);
+    return say(parts.join(' '), parts, playDemo);
   }
   store.add(current.index);
   mood('happy', 2500);
@@ -435,7 +444,8 @@ function playDemo() {
   let t = 0;
   notes.forEach((letter, i) => {
     const step = (beats?.[i] ?? 1) * beat;
-    const len = touch === 'legato' ? step + 0.15 : touch === 'detached' ? step * 0.4 : 0.6; // overlap vs. gap
+    const lift = touch === 'detached' || (touch === 'legato' && notes[i + 1] === letter);
+    const len = lift ? step * 0.4 : touch === 'legato' ? step + 0.15 : 0.6; // gap vs. overlap
     const midi = keyFor(letter);
     playTone(midi, t, len);
     setTimeout(() => {
