@@ -67,3 +67,30 @@ export function createNoteTracker({ stableFrames = 3, gate = 0.01 } = {}) {
 // File name of the recorded voice clip for a spoken line: "Das ist ein Cis!" -> "das-ist-ein-cis".
 export const clipName = (text) => text.toLowerCase().replace(/ß/g, 'ss').normalize('NFD').replace(/\p{M}/gu, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60).replace(/-$/, '');
+
+// "ti-ti ta" -> note lengths in beats: [0.5, 0.5, 1]. "ta-a" is a half note (2 beats).
+export const parseBeat = (beat) => beat.split(' ').flatMap((t) => ({ ta: [1], 'ti-ti': [0.5, 0.5], 'ta-a': [2] })[t]
+  ?? (() => { throw new Error(`unknown beat "${t}"`); })());
+
+// Did the note start times (ms) follow these lengths? Any steady tempo counts; each gap may be off by `tol`.
+// The last note's length can't be heard (nothing follows it), so only the gaps between notes are checked.
+export function rhythmOk(times, beats, tol = 0.35) {
+  const gaps = times.slice(1).map((t, i) => t - times[i]);
+  const want = beats.slice(0, gaps.length);
+  const msPerBeat = gaps.reduce((a, b) => a + b, 0) / want.reduce((a, b) => a + b, 0);
+  if (!(msPerBeat > 200 && msPerBeat < 2000)) return false;
+  return gaps.every((g, i) => Math.abs(g - want[i] * msPerBeat) <= tol * want[i] * msPerBeat);
+}
+
+// Gebunden or not, from the mic: if the sound dropped well below the last note's peak before the next note
+// started, the finger came up early (ungebunden). Call every frame; returns true/false on a new note.
+// shortcut: `dip` is a first guess for an acoustic piano without pedal; tune it on her real piano.
+export function createTouchTracker({ dip = 0.2, gate = 0.01 } = {}) {
+  let peak = 0, dipped = false;
+  return function feed(level, isNewNote) {
+    if (isNewNote) { const linked = !dipped; peak = level; dipped = false; return linked; }
+    peak = Math.max(peak, level);
+    if (peak > 0 && level < Math.max(gate, peak * dip)) dipped = true;
+    return undefined;
+  };
+}
