@@ -6,7 +6,7 @@ A piano app (in German) for a 6-year-old. Miau Miau the cat watches the screen, 
 
 - Works on phone and desktop in the browser, and can be installed to the home screen.
 - Pitch detection runs on the device. No audio is recorded or sent anywhere.
-- Lessons: Freies Spiel, Finde das C, C D E, Fünf Pfoten, then Hänschen klein, Alle meine Entchen, Funkel funkel kleiner Stern and Ode an die Freude. Notes use German names (H, not B).
+- Lessons: Freies Spiel, Finde das C, C D E, Fünf Pfoten, then Hänschen klein, Alle meine Entchen, Funkel funkel kleiner Stern, Ode an die Freude, and Gespräch in der Höhle (black keys, bear = left hand, bird = right hand). Notes use German names (H, not B).
 - No microphone? Tap the on-screen keys instead.
 
 ## Run

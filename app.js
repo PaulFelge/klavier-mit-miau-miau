@@ -1,8 +1,9 @@
 import { NOTE_NAMES, detectPitch, freqToMidi, midiToFreq, pitchClass, rms, createNoteTracker } from './pitch.js';
 
 const $ = (id) => document.getElementById(id);
-const LETTER_TO_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, H: 11 };
 const FINGER = { C: 1, D: 2, E: 3, F: 4, G: 5, A: 5 }; // right hand, thumb on C
+// Black-key lessons say which hand plays each note (L = bear, R = bird), as in her book.
+const HAND = { L: { label: '🐻 Finger', Cis: 3, Dis: 2 }, R: { label: '🐦 Finger', Cis: 2, Dis: 3 } };
 
 // Songs are public domain. Rhythm is left out on purpose: at 6 she learns where the keys are first.
 const LESSONS = [
@@ -14,6 +15,13 @@ const LESSONS = [
   { title: 'Alle meine Entchen', intro: 'Alle meine Entchen! Für das A streckst du den kleinen Finger.', notes: 'C D E F G G A A A A G A A A A G F F F F E E D D D D C' },
   { title: 'Funkel, funkel, kleiner Stern', intro: 'Funkel, funkel, kleiner Stern! Für das A streckst du den kleinen Finger.', notes: 'C C G G A A G F F E E D D C' },
   { title: 'Ode an die Freude', intro: 'Ein ganz berühmtes Lied von Beethoven. Du schaffst das!', notes: 'E E F G G F E D C C D E E D D' },
+  // From her book (page 17); only the notes, the lyrics stay in the book. Added last so saved stars keep their index.
+  {
+    title: 'Gespräch in der Höhle',
+    intro: 'Heute spielen wir nur auf den zwei schwarzen Tasten! Der Bär spielt mit der linken Hand, der Vogel mit der rechten.',
+    notes: 'Cis Dis Cis Dis Cis Dis Cis Dis Cis Dis Cis Dis ' + 'Dis Cis Dis Dis Cis Dis Cis Dis Dis Cis ' + 'Dis Dis Cis Cis Dis Dis Cis Dis Dis Cis Cis Dis Dis Cis',
+    hands: 'L'.repeat(12) + 'R'.repeat(10) + 'L'.repeat(14),
+  },
 ];
 
 // shortcut: progress lives in this browser only; fine for one child on one device.
@@ -165,6 +173,7 @@ function confetti() {
 const WHITE = [60, 62, 64, 65, 67, 69, 71, 72];
 const BLACK = [[61, 1], [63, 2], [66, 4], [68, 5], [70, 6]]; // [midi, sits after this many white keys]
 const name = (m) => NOTE_NAMES[pitchClass(m)];
+const keyFor = (letter) => [...WHITE, ...BLACK.map(([m]) => m)].find((m) => name(m) === letter);
 
 function buildKeys() {
   const kb = document.createElement('div');
@@ -188,6 +197,7 @@ function buildKeys() {
   }
   for (const [m, after] of BLACK) {
     const b = mk(m, 'black');
+    b.style.setProperty('--note', `var(--${name(m)}, #fff)`);
     b.style.left = `calc(var(--w) * ${after})`;
     kb.append(b);
   }
@@ -261,8 +271,10 @@ function renderTarget() {
   if (!letter) return;
   $('target').style.setProperty('--note', `var(--${letter})`);
   $('t-note').textContent = letter;
-  $('t-finger').textContent = FINGER[letter] ? `Finger ${FINGER[letter]}` : '';
-  const key = WHITE.find((m) => name(m) === letter);
+  const hand = HAND[LESSONS[current.index].hands?.[pos]];
+  const finger = hand ? hand[letter] : FINGER[letter];
+  $('t-finger').textContent = finger ? `${hand?.label ?? 'Finger'} ${finger}` : '';
+  const key = keyFor(letter);
   document.querySelector(`.key[data-midi="${key}"]`)?.classList.add('goal');
   lookAtKey(key);
 }
@@ -275,7 +287,7 @@ function onNote(midi) {
   if (LESSONS[current.index].free) { mood('happy', 700); return say(`Das ist ein ${name(midi)}!`); }
   const want = current.notes[current.pos];
   if (!want) return;
-  if (pitchClass(midi) !== LETTER_TO_PC[want]) {
+  if (pitchClass(midi) !== NOTE_NAMES.indexOf(want)) {
     mood('hmm');
     return say(`Das war ein ${name(midi)}. Finde das ${want}!`);
   }
@@ -299,7 +311,7 @@ function onNote(midi) {
 function playDemo() {
   window.speechSynthesis?.cancel();
   current.notes.forEach((letter, i) => {
-    const midi = WHITE.find((m) => name(m) === letter);
+    const midi = keyFor(letter);
     playTone(midi, i * 0.5, 0.6);
     setTimeout(() => flash(midi), i * 500);
   });

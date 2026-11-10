@@ -9,6 +9,7 @@
   --accent: #7048e8;
   /* One color per note, used on cards and keys so she links letter, color and key */
   --C: #ff6b6b; --D: #ffa94d; --E: #ffd43b; --F: #69db7c; --G: #3bc9db; --A: #9775fa; --H: #f783ac;
+  --Cis: #a5d8ff; --Dis: #b2f2bb;
   font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
 }
 
