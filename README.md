@@ -29,6 +29,17 @@ ffmpeg -i in.mp4 -an -c:v libx264 -g 1 -crf 26 -pix_fmt yuv420p -vf scale=960:-2
 
 Three short reaction clips play over the turning kitten and then fade back to it: `assets/kitten-ja.mp4` on each correct note, `assets/kitten-geschafft.mp4` when a lesson is finished, and `assets/kitten-kuscheln.mp4` (with a purr) when she taps the kitten. Each one starts and ends facing the front. They play straight through, so they need no keyframe re-encode.
 
+## The voice
+
+Every line Miau Miau says is a recorded clip in `assets/voice/`. The file name comes from the text through `clipName()` in `pitch.js` ("Das ist ein Cis!" becomes `das-ist-ein-cis.mp3`). "Das war ein X. Finde das Y!" is played as two clips. If a clip is missing, the device's built-in voice reads the line instead, so a new or changed line still works before its clip exists.
+
+To add or change a line, generate it with ElevenLabs v4, voice "Tilly Bramble" (via Magnific), with the text prefixed by `[cheerful, playful, cute little kitten voice]`. Then trim the silence and save it under its `clipName()`:
+
+```sh
+T='silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05'
+ffmpeg -i in.mp3 -af "$T,areverse,$T,areverse" -ac 1 -b:a 64k assets/voice/<clip-name>.mp3
+```
+
 Scrubbing needs a server that supports HTTP range requests (`npm start`, GitHub Pages and Netlify all do).
 
 On a phone, the mic only works over HTTPS, so host the folder on any static host (GitHub Pages, Netlify, Cloudflare Pages). There is no build step.

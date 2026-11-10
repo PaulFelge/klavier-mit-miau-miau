@@ -63,3 +63,7 @@ export function createNoteTracker({ stableFrames = 3, gate = 0.01 } = {}) {
     return midi;
   };
 }
+
+// File name of the recorded voice clip for a spoken line: "Das ist ein Cis!" -> "das-ist-ein-cis".
+export const clipName = (text) => text.toLowerCase().replace(/ß/g, 'ss').normalize('NFD').replace(/\p{M}/gu, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60).replace(/-$/, '');
