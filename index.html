@@ -16,8 +16,16 @@
   <header class="bar">
     <button id="back" class="round" aria-label="Zurück zu den Lektionen" hidden>←</button>
     <h1 id="title">Klavier mit Miau Miau</h1>
+    <button id="share" class="round" aria-label="Auf dem Handy öffnen" title="Auf dem Handy öffnen">📱</button>
     <button id="mic" class="pill" aria-pressed="false">🎤 Zuhören</button>
   </header>
+
+  <dialog id="share-dialog" class="share" closedby="any" aria-labelledby="share-title">
+    <h2 id="share-title">Auf dem Handy öffnen</h2>
+    <div id="qr" class="qr"></div>
+    <p>Scanne den Code mit der Handy-Kamera.</p>
+    <form method="dialog"><button class="pill">Schließen</button></form>
+  </dialog>
 
   <main>
     <div class="stage">

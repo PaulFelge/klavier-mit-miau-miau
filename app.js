@@ -367,6 +367,21 @@ buildKeys();
 renderHome();
 $('back').addEventListener('click', goHome);
 $('mic').addEventListener('click', toggleMic);
+$('share').addEventListener('click', async () => {
+  const { default: qrcode } = await import('./assets/qrcode.mjs');
+  const qr = qrcode(0, 'M');
+  qr.addData(location.origin + location.pathname); // drop query/hash so the phone gets a clean start
+  qr.make();
+  $('qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+  $('share-dialog').showModal();
+});
+// Light-dismiss fallback for browsers without <dialog closedby> (Safari).
+if (!('closedBy' in HTMLDialogElement.prototype)) {
+  $('share-dialog').addEventListener('click', (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    if (e.target === e.currentTarget && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) e.currentTarget.close();
+  });
+}
 $('hear').addEventListener('click', playDemo);
 $('next').addEventListener('click', () => startLesson(current.index + 1));
 cat.addEventListener('click', () => {
